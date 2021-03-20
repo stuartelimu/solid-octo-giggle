@@ -1,2 +1,2 @@
 # solid-octo-giggle
-CI/DC Pipeline Django DO
+CI/CD Pipeline Django DO
