@@ -1,0 +1,63 @@
+name: Django DO CI/CD Workflow
+
+# triggers for our workflow
+on: 
+  # opening a pull request to master and develop branch will be a trigger
+  pull_request:
+    branches:
+      - master
+      - develop
+    
+  # any code pushed to master and develop branch will also be a trigger
+  push:
+    branches:
+    - master
+    - develop
+
+# jobs
+jobs:
+  health-check-job: # health check job for testing and code formatting check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout code # checkout the code to the current commit that triggers the workflow
+        uses: actions/checkout@v2
+      - name: cache dependency # caching dependency to make our build faster
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt')}}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: setup python environment # setting up python environment to Python 3.x
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: check python version
+        run: python --version
+      - name: install requirements
+        run: pip install -r requirements.txt
+      - name: run migrations
+        run: python manage.py migrate
+      - name: run test # running tests
+        run: python manage.py test
+
+  deploy-job: # deploy to digital ocean
+    runs-on: ubuntu-latest
+    needs: [health-check-job]
+    if: ${{ github.event_name == 'push'}} # will be fired if the trigger event is a push event
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v2
+      - name: deploy to DO
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }} # ip address of the server
+          key: ${{ secrets.SSH_KEY }} # private or public key of the server
+          username: ${{ secrets.SSH_USERNAME }} # user of the server
+
+          script: |
+            mkdir cicdtest
+            cd cicdtest
+            git clone git@github.com:stuartelimu/solid-octo-giggle.git
+            echo 'Lift Off 🚀'
