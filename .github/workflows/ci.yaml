@@ -57,7 +57,7 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }} # user of the server
 
           script: |
-            mkdir cicdtest
             cd cicdtest
-            git clone git@github.com:stuartelimu/solid-octo-giggle.git
+            cd solid-octo-giggle
+            git pull
             echo 'Lift Off 🚀'
